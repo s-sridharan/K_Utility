@@ -1,5 +1,9 @@
+import os
+from flask_cors import CORS
 from flask import Flask, request, jsonify, send_from_directory
 from textblob import TextBlob
+import matplotlib
+matplotlib.use('Agg')
 import requests
 from bs4 import BeautifulSoup
 import matplotlib.pyplot as plt
@@ -7,9 +11,13 @@ import io
 import base64
 import threading
 import webbrowser
-import os
 
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
+
+@app.route('/')
+def hello():
+    return "Hello, World!"
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
@@ -25,14 +33,20 @@ def analyze():
     plt.figure(figsize=(6, 4))
     plt.bar(['Polarity', 'Subjectivity'], [sentiment.polarity, sentiment.subjectivity])
     plt.title('Sentiment Analysis')
-    
+
     img = io.BytesIO()
     plt.savefig(img, format='png')
     img.seek(0)
     img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
     plt.close()
 
-    return jsonify({'imageUrl': f'data:image/png;base64,{img_base64}'})
+    result = {
+        'polarity': blob.sentiment.polarity,
+        'subjectivity': blob.sentiment.subjectivity,
+        'imageUrl': f'data:image/png;base64,{img_base64}'
+    }
+    print(jsonify(result))
+    return jsonify(result)
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
