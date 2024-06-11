@@ -1,64 +1,76 @@
+import sys
 import os
-from flask_cors import CORS
-from flask import Flask, request, jsonify, send_from_directory
-from textblob import TextBlob
 import matplotlib
+
 matplotlib.use('Agg')
-import requests
-from bs4 import BeautifulSoup
-import matplotlib.pyplot as plt
-import io
-import base64
+from flask import Flask, request, jsonify, send_from_directory, Blueprint
+from flask_cors import CORS
 import threading
 import webbrowser
+from sentiment_analyzers import analyze_google_reviews, analyze_apple_reviews, analyze_twitter_hashtag
 
-app = Flask(__name__)
+def resource_path(relative_path):
+    """ Get the absolute path to the resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+web_build_folder = resource_path('web_build')
+web_build_bp = Blueprint('web_build', __name__, static_folder=web_build_folder)
+
+app = Flask(__name__, static_folder=web_build_folder)
 CORS(app)  # Enable CORS for all routes
 
 @app.route('/')
-def hello():
-    return "Hello, World!"
+def index():
+    print(f"Serving from: {app.static_folder}")
+    return send_from_directory(app.static_folder, 'index.html')
 
-@app.route('/analyze', methods=['POST'])
-def analyze():
-    data = request.json
-    url = data['url']
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    text = soup.get_text()
-
-    blob = TextBlob(text)
-    sentiment = blob.sentiment
-
-    plt.figure(figsize=(6, 4))
-    plt.bar(['Polarity', 'Subjectivity'], [sentiment.polarity, sentiment.subjectivity])
-    plt.title('Sentiment Analysis')
-
-    img = io.BytesIO()
-    plt.savefig(img, format='png')
-    img.seek(0)
-    img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
-    plt.close()
-
-    result = {
-        'polarity': blob.sentiment.polarity,
-        'subjectivity': blob.sentiment.subjectivity,
-        'imageUrl': f'data:image/png;base64,{img_base64}'
-    }
-    print(jsonify(result))
-    return jsonify(result)
-
-@app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
-def serve(path):
-    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, 'index.html')
+def static_proxy(path):
+    print(f"Serving static file: {path}")
+    return send_from_directory(app.static_folder, path)
+
+@app.route('/sentimentAnalysis', methods=['GET', 'POST'])
+def sentiment_analysis():
+    if request.method == 'GET':
+        # Return a list of available analyses
+        return jsonify({
+            "available_analyses": ["google", "apple", "twitter"]
+        })
+
+    elif request.method == 'POST':
+        data = request.get_json()
+        text = data.get('text', '')
+        analysis_type = data.get('type', '')
+
+        print(f'Received request for {analysis_type} with text: {text}')
+
+        if analysis_type == 'google':
+            return analyze_google_reviews.get_counts()
+        elif analysis_type == 'apple':
+            return analyze_apple_reviews.get_counts()
+        elif analysis_type == 'twitter':
+            return analyze_twitter_hashtag.get_counts()
+        else:
+            return jsonify({"error": "Invalid analysis type"}), 400
 
 def open_browser():
     webbrowser.open_new('http://127.0.0.1:5000/')
 
+@app.route('/shutdown', methods=['POST'])
+def shutdown():
+    shutdown_server = request.environ.get('werkzeug.server.shutdown')
+    if shutdown_server:
+        shutdown_server()
+    return 'Server shutting down...'
+
 if __name__ == '__main__':
-    threading.Timer(1.25, open_browser).start()
-    app.run(port=5000, debug=False)
+    app.register_blueprint(web_build_bp, url_prefix='/')
+    # Open the browser after a slight delay to ensure the server is running
+    threading.Timer(1, open_browser).start()
+    app.run(port=5000, debug=True)

@@ -7,10 +7,10 @@ flask_path = os.path.join(os.getcwd(), 'venv', 'Lib', 'site-packages')
 
 a = Analysis(
     ['main.py'],
-    pathex=[flask_path],
+    pathex=[flask_path, 'K_utility/backend'],
     binaries=[],
     datas=[
-        ('static', 'static'),  # Include the static directory for the Flutter web files
+        ('../review_utility/build/web', 'web_build'),  # Include the static directory for the Flutter web files
     ],
     hiddenimports=[
         HIDDENIMPORTS_PLACEHOLDER

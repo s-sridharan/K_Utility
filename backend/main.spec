@@ -7,13 +7,13 @@ flask_path = os.path.join(os.getcwd(), 'venv', 'Lib', 'site-packages')
 
 a = Analysis(
     ['main.py'],
-    pathex=[flask_path],
+    pathex=[flask_path, 'K_utility/backend'],
     binaries=[],
     datas=[
-        ('static', 'static'),  # Include the static directory for the Flutter web files
+        ('../review_utility/build/web', 'web_build'),  # Include the static directory for the Flutter web files
     ],
     hiddenimports=[
-        'flask', 'appdirs', 'setuptools', 'flask-cors', 'textblob', 'matplotlib'
+        'flask', 'appdirs', 'setuptools', 'flask-cors', 'textblob', 'matplotlib', 'numpy', 'google_play_scraper', 'app_store_scraper', 'nltk', 'pandas', 'pytest'
     ],
     hookspath=['.'],
     runtime_hooks=[],
@@ -37,6 +37,6 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=True,
+    console=False,
     onefile=True
 )
