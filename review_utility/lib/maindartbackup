@@ -1,0 +1,221 @@
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Sentiment Analysis',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: Colors.white,
+      ),
+      home: HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final TextEditingController _googleController = TextEditingController();
+  final TextEditingController _appleController = TextEditingController();
+  final TextEditingController _twitterController = TextEditingController();
+
+  String _googleResult = '';
+  String _googleImageUrl = '';
+  String _appleResult = '';
+  String _appleImageUrl = '';
+  String _twitterResult = '';
+  String _twitterImageUrl = '';
+
+  Future<void> _analyzeSentiment(String type, String text) async {
+    print('Starting sentiment analysis for type: $type with text: $text');
+
+    final response = await http.post(
+      Uri.parse('http://127.0.0.1:5000/sentimentAnalysis'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{'type': type, 'text': text}),
+    );
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        if (type == 'google') {
+          _googleResult =
+              'Polarity: ${data['polarity']}\nSubjectivity: ${data['subjectivity']}';
+          _googleImageUrl = data['imageUrl'];
+        } else if (type == 'apple') {
+          _appleResult =
+              'Polarity: ${data['polarity']}\nSubjectivity: ${data['subjectivity']}';
+          _appleImageUrl = data['imageUrl'];
+        } else if (type == 'twitter') {
+          _twitterResult =
+              'Polarity: ${data['polarity']}\nSubjectivity: ${data['subjectivity']}';
+          _twitterImageUrl = data['imageUrl'];
+        }
+      });
+    } else {
+      setState(() {
+        if (type == 'google') {
+          _googleResult = 'Error: Unable to analyze sentiment';
+          _googleImageUrl = '';
+        } else if (type == 'apple') {
+          _appleResult = 'Error: Unable to analyze sentiment';
+          _appleImageUrl = '';
+        } else if (type == 'twitter') {
+          _twitterResult = 'Error: Unable to analyze sentiment';
+          _twitterImageUrl = '';
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Sentiment Analysis'),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              TextField(
+                controller: _googleController,
+                decoration: InputDecoration(
+                  labelText: 'Enter Google Play Store link',
+                  labelStyle: TextStyle(color: Colors.blue),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blueAccent),
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  _analyzeSentiment('google', _googleController.text);
+                },
+                child: Text('Analyze Google Reviews'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue, // Button background color
+                  foregroundColor: Colors.white, // Text color
+                ),
+              ),
+              SizedBox(height: 20),
+              _googleResult.isNotEmpty
+                  ? Column(
+                      children: [
+                        Text(
+                          _googleResult,
+                          style: TextStyle(fontSize: 18, color: Colors.blue),
+                          textAlign: TextAlign.center,
+                        ),
+                        _googleImageUrl.isNotEmpty
+                            ? Image.network(_googleImageUrl)
+                            : Container(),
+                      ],
+                    )
+                  : Container(),
+              TextField(
+                controller: _appleController,
+                decoration: InputDecoration(
+                  labelText: 'Enter Apple App Store link',
+                  labelStyle: TextStyle(color: Colors.blue),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blueAccent),
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  _analyzeSentiment('apple', _appleController.text);
+                },
+                child: Text('Analyze Apple Reviews'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue, // Button background color
+                  foregroundColor: Colors.white, // Text color
+                ),
+              ),
+              SizedBox(height: 20),
+              _appleResult.isNotEmpty
+                  ? Column(
+                      children: [
+                        Text(
+                          _appleResult,
+                          style: TextStyle(fontSize: 18, color: Colors.blue),
+                          textAlign: TextAlign.center,
+                        ),
+                        _appleImageUrl.isNotEmpty
+                            ? Image.network(_appleImageUrl)
+                            : Container(),
+                      ],
+                    )
+                  : Container(),
+              TextField(
+                controller: _twitterController,
+                decoration: InputDecoration(
+                  labelText: 'Enter Twitter hashtag',
+                  labelStyle: TextStyle(color: Colors.blue),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blueAccent),
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  _analyzeSentiment('twitter', _twitterController.text);
+                },
+                child: Text('Analyze Twitter Hashtag'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue, // Button background color
+                  foregroundColor: Colors.white, // Text color
+                ),
+              ),
+              SizedBox(height: 20),
+              _twitterResult.isNotEmpty
+                  ? Column(
+                      children: [
+                        Text(
+                          _twitterResult,
+                          style: TextStyle(fontSize: 18, color: Colors.blue),
+                          textAlign: TextAlign.center,
+                        ),
+                        _twitterImageUrl.isNotEmpty
+                            ? Image.network(_twitterImageUrl)
+                            : Container(),
+                      ],
+                    )
+                  : Container(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

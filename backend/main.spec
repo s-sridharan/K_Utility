@@ -13,7 +13,7 @@ a = Analysis(
         ('../review_utility/build/web', 'web_build'),  # Include the static directory for the Flutter web files
     ],
     hiddenimports=[
-        'flask', 'appdirs', 'setuptools', 'flask-cors', 'textblob', 'matplotlib', 'numpy', 'google_play_scraper', 'app_store_scraper', 'nltk', 'pandas', 'pytest'
+        'flask', 'appdirs', 'setuptools', 'flask-cors', 'textblob', 'matplotlib', 'numpy', 'google_play_scraper', 'app_store_scraper', 'nltk', 'pandas', 'pytest', 'selenium', 'webdriver-manager'
     ],
     hookspath=['.'],
     runtime_hooks=[],
@@ -37,6 +37,6 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=True,
     onefile=True
 )

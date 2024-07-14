@@ -60,7 +60,10 @@ def sentiment_analysis():
             return jsonify({"error": "Invalid analysis type"}), 400
 
 def open_browser():
-    webbrowser.open_new('http://127.0.0.1:5000/')
+    global browser_opened
+    if not browser_opened:
+        webbrowser.open_new('http://127.0.0.1:5000/')
+        browser_opened = True
 
 @app.route('/shutdown', methods=['POST'])
 def shutdown():
@@ -72,5 +75,5 @@ def shutdown():
 if __name__ == '__main__':
     app.register_blueprint(web_build_bp, url_prefix='/')
     # Open the browser after a slight delay to ensure the server is running
-    threading.Timer(1, open_browser).start()
+    threading.Timer(1.25, open_browser).start()
     app.run(port=5000, debug=True)
